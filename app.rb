@@ -4,31 +4,47 @@ require 'json'
 require 'sinatra/json'
 require 'sinatra/reloader'
 
-# change a base folder for static file
-set public_folder: "#{__dir__}/static"
+module SampleSinatra
 
-field_list = %w[userId id title body]
+  class App < Sinatra::Base
+    # change a base folder for static file
+    set public_folder: "#{__dir__}/static"
 
-get '/' do
-  redirect '/index.html'
-end
+    configure :production, :development do
+      enable :logging
+    end
 
-get '/posts' do
-  field = params.fetch(:field)
+    field_list = %w[userId id title body]
 
-  unless field_list.include?(field)
-    status 400
-    body 'field not found!'
-    return
+    get '/' do
+      redirect '/index.html'
+    end
+
+    get '/posts' do
+      request.env['rack.logger'].info 'access GET /posts'
+
+      field = params.fetch(:field)
+
+      unless field_list.include?(field)
+        status 400
+        body 'field not found!'
+        return
+      end
+
+      posts = JSON.parse(Faraday.get('https://jsonplaceholder.typicode.com/posts').body)
+
+      res = posts.map { |post| { "#{field}": post[field].to_s } }
+
+      json res
+    end
+
+    get '/posts/:id' do
+      request.env['rack.logger'].info 'access GET /posts/:id'
+
+      res = JSON.parse(Faraday.get("https://jsonplaceholder.typicode.com/posts/#{params[:id]}").body)
+
+      json res
+    end
   end
-
-  posts = JSON.parse(Faraday.get('https://jsonplaceholder.typicode.com/posts').body)
-
-  res = posts.map { |post| { "#{field}": post[field].to_s } }
-
-  json res
 end
 
-get '/posts/:id' do
-  Faraday.get("https://jsonplaceholder.typicode.com/posts/#{params[:id]}").body
-end
