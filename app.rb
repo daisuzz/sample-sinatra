@@ -4,6 +4,7 @@ require 'json'
 require 'sinatra/json'
 require 'sinatra/reloader'
 require 'securerandom'
+require 'mysql2-cs-bind'
 
 module SampleSinatra
 
@@ -12,46 +13,50 @@ module SampleSinatra
       enable :logging
     end
 
-    todos_repo = []
-    todo1 = {
-      id: SecureRandom.uuid,
-      title: '食べる',
-      due_date: '2021-01-01'
-    }
+    class MySQLConnectionEnv
+      def connect_db
+        Mysql2::Client.new(
+          host: '127.0.0.1',
+          port: 3306,
+          username: 'user',
+          password: 'password',
+          database: 'sample')
+      end
+    end
 
-    todo2 = {
-      id: SecureRandom.uuid,
-      title: '走る',
-      due_date: '2021-01-01'
-    }
-
-    todo3 = {
-      id: SecureRandom.uuid,
-      title: '寝る',
-      due_date: '2021-01-01'
-    }
-
-    todos_repo << todo1
-    todos_repo << todo2
-    todos_repo << todo3
+    helpers do
+      def db
+        Thread.current[:db] ||= MySQLConnectionEnv.new.connect_db
+      end
+    end
 
     get '/' do
-      @todos = todos_repo
-      puts @todos
+      @todos = fetch_todos
       erb :index
     end
 
     post '/todo/create' do
       @title = params[:title]
       @due_date = params[:due_date]
-      new_todo = {
-        id: SecureRandom.uuid,
-        title: @title,
-        due_date: @due_date
-      }
-      todos_repo << new_todo
-      @todos = todos_repo
-      erb :index
+      db.xquery('INSERT INTO todo (id, title, dueDate) VALUES (?, ?, ?)',
+                SecureRandom.uuid,
+                @title,
+                DateTime.parse(@due_date).to_s)
+      redirect '/'
+    end
+
+    def fetch_todos
+      todos = []
+      rows = db.query('SELECT * FROM todo')
+      rows.each do |row|
+        todos << {
+          id: row['id'],
+          title: row['title'],
+          due_date: Date.parse(row['dueDate'].to_s),
+          is_done: row['isDone']
+        }
+      end
+      todos
     end
   end
 end

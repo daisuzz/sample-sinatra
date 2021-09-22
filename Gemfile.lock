@@ -26,6 +26,9 @@ GEM
     multipart-post (2.1.1)
     mustermann (1.1.1)
       ruby2_keywords (~> 0.0.1)
+    mysql2 (0.5.3)
+    mysql2-cs-bind (0.1.0)
+      mysql2
     rack (2.2.3)
     rack-protection (2.1.0)
       rack
@@ -52,6 +55,8 @@ PLATFORMS
 
 DEPENDENCIES
   faraday
+  mysql2
+  mysql2-cs-bind
   sinatra (~> 2.1)
   sinatra-contrib (~> 2.1)
   thin (~> 1.8)

@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  db-server:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: sample
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: admin
+    volumes:
+      - ./docker/mysql/initdb:/docker-entrypoint-initdb.d
+      - ./docker/mysql/config:/etc/mysql/conf.d
+    ports:
+      - "3306:3306"
+volumes:
+  mysql_db:
+    driver: local
