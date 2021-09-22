@@ -3,47 +3,55 @@ require 'sinatra'
 require 'json'
 require 'sinatra/json'
 require 'sinatra/reloader'
+require 'securerandom'
 
 module SampleSinatra
 
   class App < Sinatra::Base
-    # change a base folder for static file
-    set public_folder: "#{__dir__}/static"
-
     configure :production, :development do
       enable :logging
     end
 
-    field_list = %w[userId id title body]
+    todos_repo = []
+    todo1 = {
+      id: SecureRandom.uuid,
+      title: '食べる',
+      due_date: '2021-01-01'
+    }
+
+    todo2 = {
+      id: SecureRandom.uuid,
+      title: '走る',
+      due_date: '2021-01-01'
+    }
+
+    todo3 = {
+      id: SecureRandom.uuid,
+      title: '寝る',
+      due_date: '2021-01-01'
+    }
+
+    todos_repo << todo1
+    todos_repo << todo2
+    todos_repo << todo3
 
     get '/' do
-      redirect '/index.html'
+      @todos = todos_repo
+      puts @todos
+      erb :index
     end
 
-    get '/posts' do
-      request.env['rack.logger'].info 'access GET /posts'
-
-      field = params.fetch(:field)
-
-      unless field_list.include?(field)
-        status 400
-        body 'field not found!'
-        return
-      end
-
-      posts = JSON.parse(Faraday.get('https://jsonplaceholder.typicode.com/posts').body)
-
-      res = posts.map { |post| { "#{field}": post[field].to_s } }
-
-      json res
-    end
-
-    get '/posts/:id' do
-      request.env['rack.logger'].info 'access GET /posts/:id'
-
-      res = JSON.parse(Faraday.get("https://jsonplaceholder.typicode.com/posts/#{params[:id]}").body)
-
-      json res
+    post '/todo/create' do
+      @title = params[:title]
+      @due_date = params[:due_date]
+      new_todo = {
+        id: SecureRandom.uuid,
+        title: @title,
+        due_date: @due_date
+      }
+      todos_repo << new_todo
+      @todos = todos_repo
+      erb :index
     end
   end
 end

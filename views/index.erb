@@ -1,0 +1,28 @@
+<html>
+<header>
+  <title>ToDo Application</title>
+</header>
+<body>
+<div>
+  <table>
+    <tr>
+      <th>Title</th>
+      <th>DueDate</th>
+    </tr>
+    <% todos = @todos %>
+    <% todos.each do |todo| %>
+      <tr>
+        <td><%= todo[:title] %></td>
+        <td><%= todo[:due_date] %></td>
+      </tr>
+    <% end %>
+  </table>
+</div>
+
+<form action="/todo/create" method="post">
+  <div>Title: <input type="text" name="title" value=""></div>
+  <div>DueDate: <input type="text" name="due_date" value=""></div>
+  <div><input type="submit" value="Create!!"></div>
+</form>
+</body>
+</html>
